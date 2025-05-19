@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Красивый интерактивный опросник</title>
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-4">
+    <div class="w-full max-w-xl bg-white rounded-2xl shadow-2xl p-8" id="app">
+      <h1 class="text-3xl font-bold mb-6 text-center">Опросник</h1>
+      <div id="question-container"></div>
+      <div class="mt-6 flex justify-between items-center">
+        <div id="progress" class="text-sm text-gray-500"></div>
+        <button id="next-btn" class="bg-indigo-600 text-white py-2 px-6 rounded-xl shadow hover:bg-indigo-700 transition">Далее</button>
+      </div>
+    </div>
+
+    <script>
+      const questions = [
+        {
+          text: "Как часто вы пользуетесь интернетом?",
+          options: [
+            "Ежедневно",
+            "Несколько раз в неделю",
+            "Раз в неделю",
+            "Реже",
+          ],
+        },
+        {
+          text: "Какую соцсеть вы используете чаще всего?",
+          options: ["VK", "Telegram", "Instagram", "Другое"],
+        },
+      ];
+
+      let current = 0;
+      const answers = [];
+
+      function renderQuestion() {
+        const qc = document.getElementById("question-container");
+        qc.innerHTML = "";
+        const q = questions[current];
+
+        const qEl = document.createElement("h2");
+        qEl.className = "text-xl font-semibold mb-4";
+        qEl.textContent = q.text;
+        qc.appendChild(qEl);
+
+        q.options.forEach((opt, i) => {
+          const label = document.createElement("label");
+          label.className =
+            "block mb-3 cursor-pointer transition hover:scale-[1.02]";
+
+          const input = document.createElement("input");
+          input.type = "radio";
+          input.name = "answer";
+          input.value = opt;
+          input.className = "mr-2 accent-indigo-600";
+
+          label.appendChild(input);
+          label.appendChild(document.createTextNode(opt));
+          qc.appendChild(label);
+        });
+
+        document.getElementById("progress").textContent = `Вопрос ${current + 1} из ${questions.length}`;
+        document.getElementById("next-btn").textContent =
+          current === questions.length - 1 ? "Завершить" : "Далее";
+      }
+
+      document.getElementById("next-btn").addEventListener("click", () => {
+        const selected = document.querySelector("input[name='answer']:checked");
+        if (!selected) {
+          alert("Пожалуйста, выберите вариант ответа.");
+          return;
+        }
+        answers[current] = selected.value;
+        current++;
+
+        if (current < questions.length) {
+          renderQuestion();
+        } else {
+          showResults();
+        }
+      });
+
+      function showResults() {
+        const qc = document.getElementById("question-container");
+        qc.innerHTML = "";
+
+        const title = document.createElement("h2");
+        title.className = "text-xl font-semibold mb-4";
+        title.textContent = "Спасибо за прохождение опроса!";
+        qc.appendChild(title);
+
+        answers.forEach((ans, i) => {
+          const p = document.createElement("p");
+          p.className = "mb-2";
+          p.textContent = `${i + 1}. ${questions[i].text} — ${ans}`;
+          qc.appendChild(p);
+        });
+
+        document.getElementById("next-btn").style.display = "none";
+        document.getElementById("progress").textContent = "✔ Опрос завершён";
+      }
+
+      // Инициализация
+      renderQuestion();
+    </script>
+  </body>
+</html>
