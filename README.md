@@ -1,6 +1,7 @@
-# React + TypeScript + Vite
+# Интерактивный опросник на React
+Этот проект содержит минимальный шаблон Vite с React и небольшим интерактивным опросником.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## React + TypeScript + Vite
 
 Currently, two official plugins are available:
 
