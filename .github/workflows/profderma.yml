@@ -1,35 +1,25 @@
-name: Build verified ProfDerma page
+name: Verify public ProfDerma on mobile browsers
 on:
   push:
     branches: [profderma-web]
 permissions:
-  contents: write
+  contents: read
 jobs:
-  build:
+  verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Restore and verify complete application
+      - name: Install browser test tools
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import gzip,hashlib,json
-          parts=sorted(Path('payload').glob('*.part'))
-          assert len(parts)==12
-          data=gzip.decompress(b''.join(p.read_bytes() for p in parts))
-          assert hashlib.sha256(data).hexdigest()=='4243d3d72d756d41923c4906601b21dedb07b8219da6563d66ed6859e0ef0cc7'
-          Path('index.html').write_bytes(data)
-          Path('blob.json').write_text(json.dumps({'content':data.decode('utf-8'),'encoding':'utf-8'}))
-          print('Verified:',len(data),'bytes')
-          PY
-      - name: Store verified page object for reviewed publication
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh api --method POST repos/${{ github.repository }}/git/blobs --input blob.json --jq '{sha,url}'
+          python3 -m pip install playwright
+          python3 -m playwright install --with-deps chromium webkit
+      - name: Verify published app and mobile interaction
+        run: python3 tests/live_mobile.py
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: profderma-website
-          path: index.html
+          name: profderma-browser-verification
+          path: test-output/
