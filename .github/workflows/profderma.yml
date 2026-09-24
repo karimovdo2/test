@@ -1,26 +1,34 @@
-name: Verify ProfDerma application package
+name: Build verified ProfDerma page
 on:
   push:
     branches: [profderma-web]
 permissions:
-  contents: read
+  contents: write
 jobs:
-  verify:
+  build:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Verify complete application
+        with:
+          persist-credentials: false
+      - name: Restore and verify complete application
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import gzip,hashlib
+          import gzip,hashlib,json
           parts=sorted(Path('payload').glob('*.part'))
           assert len(parts)==12
           data=gzip.decompress(b''.join(p.read_bytes() for p in parts))
           assert hashlib.sha256(data).hexdigest()=='4243d3d72d756d41923c4906601b21dedb07b8219da6563d66ed6859e0ef0cc7'
           Path('index.html').write_bytes(data)
+          Path('blob.json').write_text(json.dumps({'content':data.decode('utf-8'),'encoding':'utf-8'}))
           print('Verified:',len(data),'bytes')
           PY
+      - name: Store verified page object for reviewed publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST repos/${{ github.repository }}/git/blobs --input blob.json --jq '{sha,url}'
       - uses: actions/upload-artifact@v4
         with:
           name: profderma-website
