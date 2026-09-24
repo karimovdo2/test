@@ -1,15 +1,27 @@
-name: ProfDerma publication preparation
+name: Verify ProfDerma application package
 on:
   push:
     branches: [profderma-web]
 permissions:
   contents: read
-  pages: read
 jobs:
-  check:
+  verify:
     runs-on: ubuntu-latest
     steps:
-      - name: Read existing Pages configuration
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh api repos/${{ github.repository }}/pages --jq '{html_url,build_type,source,status}'
+      - uses: actions/checkout@v4
+      - name: Verify complete application
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import gzip,hashlib
+          parts=sorted(Path('payload').glob('*.part'))
+          assert len(parts)==12
+          data=gzip.decompress(b''.join(p.read_bytes() for p in parts))
+          assert hashlib.sha256(data).hexdigest()=='4243d3d72d756d41923c4906601b21dedb07b8219da6563d66ed6859e0ef0cc7'
+          Path('index.html').write_bytes(data)
+          print('Verified:',len(data),'bytes')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: profderma-website
+          path: index.html
